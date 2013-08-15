@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+        <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.3/leaflet.css" />
+        <style type="text/css">
+            .no-close .ui-dialog-titlebar-close {
+                display: none;
+            }
+        </style>
+        
+        <script src="src/chart/Chart.min.js"></script>
+        
+        <script src="http://cdn.leafletjs.com/leaflet-0.6.3/leaflet.js"></script>
+        <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+  	<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+        
+        <script type="text/javascript" src="src/heatmap/heatmap.js"></script>
+	<script type="text/javascript" src="src/heatmap/heatmap-leaflet.js"></script>
+	<script type="text/javascript" src="src/heatmap/QuadTree.js"></script>
+        
+        <script src="src/decorator/L.GeometryUtil.js"></script>
+	<script src="src/decorator/L.RotatedMarker.js"></script>
+        <script src="src/decorator/L.Symbol.js"></script>
+        <script src="src/decorator/leaflet.polylineDecorator.min.js"></script>
+        
+        <script src="src/Graph.js"></script>
+        <script src="src/Simulation.js"></script>
+        <script src="src/MapGraph.js"></script>
+        <script src="src/Main.js"></script>
+        <script>
+            $(function() {
+		$("#menu").tabs();
+            });
+            $(function() {
+                $( "#dialog" ).dialog({
+                    dialogClass: "no-close",
+                    modal: true,
+                    buttons: [
+                        {
+                            text: "OK",
+                            click: function() {
+                                c = JSON.parse(document.getElementById("input").value);
+                                main();
+                                $(this).dialog("close");
+                                $("#simulation").show();
+                            }
+                        }
+                    ]
+                });;
+            });
+        </script>
+    </head>
+    <body>
+        <div id="dialog" title="Input trafficcounter data">
+            <textarea id="input"></textarea>
+        </div>
+        <div id="menu">
+            <ul>
+                <li><a id="hourly" href="#simulation">Hourly</a></li>
+		<li><a id="daily" href="#simulation">Daily</a></li>
+                <li><a id="monthly" href="#simulation">Monthly</a></li>
+            </ul>
+            <div id="simulation" style="height: 100%; width:100%;">
+                <h3 id="maptitle" style="text-align: center;"></h3>
+                <center><input id="slider" type="range" name="points" min="0" max="10" /></center>
+                <div>
+                    <div id="map" style="height:500px; width: 50%; float:left;"></div>
+                    <div id="chart" style="height:500px; width: 50%; float: right;">
+                        <ul>
+                            <li>Name:&nbsp;<span id="name"></span></li>
+                            <li>Number:&nbsp;<span id="number"></span></li>
+                            <li>Directions:&nbsp;<span id="direction1" style="background-color:rgba(050,205,050,0.5);"></span>&nbsp;&nbsp;<span id="direction2" style="background-color:rgba(255,020,147,0.5);"></span></li>
+                        </ul>
+                        <canvas id="canvas" height="400" width="600"></canvas>
+                    </div>
+                    <div style="clear:both; float:none"></div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
