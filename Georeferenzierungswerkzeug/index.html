@@ -176,7 +176,7 @@
                 var succ1 = document.getElementById("succ1").value;
                 var succ2 = document.getElementById("succ2").value;
                 var direction = [];
-                if(succ1 == ""){
+                if(succ1 != ""){
                     tmp = {};
                     tmp.name = document.getElementById("named1").value;
                     tmp.successor = document.getElementById("succ1").value;
@@ -186,7 +186,7 @@
                     tmp.monthly = document.getElementById("mt1").value;
                     direction.push(tmp);
                 }
-                if(succ2 == ""){
+                if(succ2 != ""){
                     tmp = {};
                     tmp.name = document.getElementById("named2").value;
                     tmp.successor = document.getElementById("succ2").value;
@@ -196,6 +196,9 @@
                     tmp.monthly = document.getElementById("mt2").value;
                     direction.push(tmp);
                 }
+                if(succ2 == "" && succ1 == ""){
+                    return false;
+                }
                 var name = document.getElementById("name").value;
                 var number = document.getElementById("number").value;
                 if(role != -2){
@@ -204,6 +207,7 @@
                 } else {
                     counterList[index] = new Counter(counterList[index].position, name, number, direction, counterList[index].marker);
                 }
+                return true;
             };
             
             clearForm = function(){
@@ -227,12 +231,16 @@
             }
             
             createNode = function(){
+                if(document.getElementById("nodeId").value==""){
+                    return false;
+                }
                 if(role != -2){
                     var circle = controller.mapview.addCircle(position);
                     nodeList.push(new Node(position, document.getElementById("nodeId").value, circle));
                 } else {
                     nodeList[index] = new Node(nodeList[index].position, document.getElementById("nodeId").value,nodeList[index].circle);
                 }
+                return true;
             };
 
             window.onload = function() {
@@ -276,9 +284,12 @@
                         {
                             text: "Add",
                             click: function() {
-                                createNode();
-                                clearForm();
-                                $(this).dialog("close");
+                                if(createNode()){
+                                    clearForm();
+                                    $(this).dialog("close");
+                                } else {
+                                    alert("Please enter a correct ID-Number for the counter!")
+                                }
                             }
                         },
                         {
@@ -310,9 +321,12 @@
                         {
                             text: "Add",
                             click: function() {
-                                createCounter();
-                                clearForm();
-                                $(this).dialog("close");
+                                if(createCounter()){
+                                    $(this).dialog("close");
+                                    clearForm();
+                                } else {
+                                    alert("Please fill up the data correctly!");
+                                }
                             }
                         },
                         {
