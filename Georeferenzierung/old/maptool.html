@@ -1,0 +1,356 @@
+<html>
+	<head>
+		<script src="http://www.openlayers.org/api/OpenLayers.js"></script>
+		<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+  		<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+  		<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+  		<style type="text/css">
+  			.no-close .ui-dialog-titlebar-close {
+  				display: none;
+			}
+  		</style>
+		<script>
+			function CounterList(){
+				this.counter = [];
+				
+				this.addCounter = function(counter, marker){
+					var currentCounter = {};
+					currentCounter.counter = counter;
+					currentCounter.marker = marker;
+					this.counter.push(currentCounter);
+				}
+				
+				this.deleteCounter = function(index){
+					var tmpCounter = [];
+					for(var i=0;i<this.counter.length;i++){
+						if(i!=index){
+							tmpCounter.push(this.counter[i]);
+						}
+					}
+					this.counter = tmpCounter;
+				}
+				
+				this.changeCounter = function(index, counter, marker){
+					if(marker != null){
+						this.counter[index].marker = marker;
+					}
+					if(counter != null){
+						this.counter[index].counter = counter;
+					}
+				}
+				
+				this.exportString = function(){
+					var exportJson = {};
+					exportJson.trafficcounter = [];
+					for(var i=0;i<this.counter.length;i++){
+						var tmp = {};
+						tmp.Name = this.counter[i].counter.name;
+						tmp.Number = this.counter[i].counter.number;
+						tmp.Directions = [];
+						if(!isNaN(this.counter[i].counter.lon1)){
+							tmp.Directions[0] = {};
+							tmp.Directions[0].Lon = this.counter[i].counter.lon1;
+							tmp.Directions[0].Lat = this.counter[i].counter.lat1;
+							tmp.Directions[0].Neighbours = this.counter[i].counter.nd1.split(",").map(function(x){return parseInt(x)});
+							tmp.Directions[0].Year = this.counter[i].counter.yt1;
+							tmp.Directions[0].Day = this.counter[i].counter.dt1.split(",").map(function(x){return parseInt(x)});
+							tmp.Directions[0].Week = this.counter[i].counter.wt1.split(",").map(function(x){return parseInt(x)});
+							tmp.Directions[0].Month = this.counter[i].counter.mt1.split(",").map(function(x){return parseInt(x)});
+						}
+						if(!isNaN(this.counter[i].counter.lon2)){
+							tmp.Directions[1] = {};
+							tmp.Directions[1].Lon = this.counter[i].counter.lon2;
+							tmp.Directions[1].Lat = this.counter[i].counter.lat2;
+							tmp.Directions[1].Neighbours = this.counter[i].counter.nd2.split(",").map(function(x){return parseInt(x)});
+							tmp.Directions[1].Year = this.counter[i].counter.yt2;
+							tmp.Directions[1].Day = this.counter[i].counter.dt2.split(",").map(function(x){return parseInt(x)});
+							tmp.Directions[1].Week = this.counter[i].counter.wt2.split(",").map(function(x){return parseInt(x)});
+							tmp.Directions[1].Month = this.counter[i].counter.mt2.split(",").map(function(x){return parseInt(x)});
+						}
+						tmp.Lon = this.counter[i].marker.lonlat.lon;
+						tmp.Lat = this.counter[i].marker.lonlat.lat;
+						exportJson.trafficcounter.push(tmp);
+					}
+					return JSON.stringify(exportJson);
+				}
+			}
+			
+			function counter(name, number, lon1, lat1, nd1, yt1, dt1, wt1, mt1, lon2, lat2, nd2, yt2, dt2, wt2, mt2){
+				this.name = name;
+				this.number = number;
+				this.yt1 = yt1;
+				this.nd1 = nd1;
+				this.lon1 = lon1;
+				this.lat1 = lat1;
+				this.dt1 = dt1;
+				this.wt1 = wt1;
+				this.mt1 = mt1;
+				this.lon2 = lon2;
+				this.lat2 = lat2;
+				this.nd2 = nd2;
+				this.yt2 = yt2;
+				this.dt2 = dt2;
+				this.wt2 = wt2;
+				this.mt2 = mt2;
+			}
+			
+			function Trafficmap(mapDiv, lon, lat, zoom){
+				this.map = new OpenLayers.Map(mapDiv);
+				this.markerLayer = new OpenLayers.Layer.Markers("Markers");
+				this.map.addLayer(new OpenLayers.Layer.OSM());
+				this.lonlat = new OpenLayers.LonLat(lon,lat)
+					.transform(
+						new OpenLayers.Projection("EPSG:4326"),
+						this.map.getProjectionObject()
+					);
+	   			this.map.addLayer(this.markerLayer);
+	   			
+				this.map.setCenter(this.lonlat,zoom);
+				
+				this.addMarker = function(lonlat){
+					var marker = new OpenLayers.Marker(lonlat)
+					this.markerLayer.addMarker(marker);
+					return marker;
+				}
+				
+				this.deleteMarker = function(marker){
+					this.markerLayer.removeMarker(marker);
+				}
+			}
+			
+			function View(){
+				this.importDialog = $( "#importDialog" );
+				
+				$( "#importDialog" ).dialog({
+					modal: true,
+					autoOpen: false,
+					dialogClass: "no-close"
+				});
+				
+				$(function() {
+					$("#menu").tabs();
+				});
+				
+				this.clearForm = function(){
+					$("#latlon").val('');
+					$("#name").val('');
+					$("#number").val('');
+					$("#lon1").val('');
+					$("#lat1").val('');
+					$("#nd1").val('');
+					$("#yt1").val('');
+					$("#dt1").val('');
+					$("#wt1").val('');
+					$("#mt1").val('');
+					$("#lon2").val('');
+					$("#lat2").val('');
+					$("#nd2").val('');
+					$("#yt2").val('');
+					$("#wt2").val('');
+					$("#dt2").val('');
+					$("#mt2").val('');
+				}
+				
+				this.showMap = function(){
+					$("#map").show();
+					$("#importDialog").dialog("close");
+					this.clearForm();
+				}
+				
+				this.showMap();
+				
+				this.showImport = function(){
+					$("#map").hide();
+ 					$("#dialog").dialog("open");
+				}
+			
+				this.setForm = function(latlon, name, number,lon1,lat1,nd1,yt1,dt1,wt1,mt1,lon2,lat2,nd2,yt2,dt2,wt2,mt2){
+					$("#latlon").val(latlon);
+					$("#name").val(name);
+					$("#number").val(number);
+					$("#lon1").val(lon1);
+					$("#lat1").val(lat1);
+					$("#nd1").val(nd1);
+					$("#yt1").val(yt1);
+					$("#dt1").val(dt1);
+					$("#wt1").val(wt1);
+					$("#mt1").val(mt1);
+					$("#lon2").val(lon2);
+					$("#lat2").val(lat2);
+					$("#nd2").val(nd2);
+					$("#yt2").val(yt2);
+					$("#wt2").val(wt2);
+					$("#dt2").val(dt2);
+					$("#mt2").val(mt2);
+				}
+			}
+			
+			function Controller(view, mapview, model){
+				loc = -10;
+				currentIndex = -10;
+				this.model = model;
+				this.view = view;
+				this.mapview = mapview;
+				var marker;
+				
+				saveCounter = function(){
+					var c = new counter(document.getElementById("name").value,parseInt(document.getElementById("number").value),parseFloat(document.getElementById("lon1").value),parseFloat(document.getElementById("lat1").value),document.getElementById("nd1").value,parseInt(document.getElementById("yt1").value),document.getElementById("dt1").value,document.getElementById("wt1").value,document.getElementById("mt1").value,parseFloat(document.getElementById("lon2").value),parseFloat(document.getElementById("lat2").value),document.getElementById("nd2").value,parseInt(document.getElementById("yt2").value),document.getElementById("dt2").value,document.getElementById("wt2").value,document.getElementById("mt2").value);
+					if(currentIndex<0){
+						model.addCounter(c,marker);
+					} else {
+						model.changeCounter(currentIndex, c, null);
+					}
+					view.clearForm();
+				}
+				
+				deleteCounter = function(){
+					mapview.markerLayer.removeMarker(model.counter[currentIndex].marker);
+					model.deleteCounter(currentIndex);
+				}
+				
+				markerClick = function(marker){
+					var index =0;
+					for(index=0;index<model.counter.length;index++){
+						if(model.counter[index].marker === marker){
+							break;
+						}
+					}
+					var co = model.counter[index].counter;
+					view.setForm(marker.lonlat, co.name, co.number, co.lon1, co.lat1, co.nd1, co.yt1, co.dt1, co.wt1, co.mt1, co.lon2, co.lat2, co.nd2, co.yt2, co.dt2, co.wt2, co.mt2);
+					currentIndex = index;
+				}
+				
+				this.mapview.map.events.register("click", this.mapview.map, function(e){
+					tmpLoc = loc;
+					loc = mapview.map.getLonLatFromPixel(e.xy)
+					if(currentIndex == -2){
+						add1();
+					} else if(currentIndex == -3){
+						add2();
+					} else {
+						currentIndex = -1;
+ 						$("#latlon").val(loc);
+ 						marker = mapview.addMarker(loc);
+						marker.events.register('click',mapview.map.markerLayer,function(e){
+							markerClick(marker);
+						});
+					}
+ 				});
+				
+				//this.view.importDialog.dialog("option", "buttons", [
+				//		{
+				//			text: "Import",
+				//			click: function(){
+				//				//saveCounter();
+				//			}
+				//		},
+				//		{
+				//			text: "Cancel",
+				//			click: function() {
+				//				view.showMap();
+				//			}
+				//		}
+				//	]
+				//);
+				
+				/*document.getElementById("importDialog").onclick = function(){
+					view.showImport();
+				}*/
+				
+				document.getElementById("download").onclick = function(){
+					var es = model.exportString();
+					document.location = 'data:Application/octet-stream,'+encodeURIComponent(es);
+				}
+				
+				document.getElementById("add1").onclick = function(){
+					currentIndex = -2;
+					alert("Click in the map to add a new direction for your current trafficcounter");
+				}
+				
+				add1 = function(){
+					$("#lon1").val(loc.lon-tmpLoc.lon);
+					$("#lat1").val(loc.lat-tmpLoc.lat);
+					currentIndex = -10;
+				}
+				
+				document.getElementById("add2").onclick = function(){
+					currentIndex = -3;
+					alert("Click in the map to add a new direction for your current trafficcounter");
+				}
+				
+				add2 = function(){
+					$("#lon2").val(loc.lon-tmpLoc.lon);
+					$("#lat2").val(loc.lat-tmpLoc.lat);
+					currentIndex = -10;
+				}
+			}
+			
+			//-------------------- MAIN FUNCTION --------------------
+			window.onload = function(){
+				controller = new Controller(new View(), new Trafficmap("map", 7.592573, 47.557421, 11), new CounterList());
+				$("#accordion").accordion({
+					header: "h3",          
+                    autoheight: false,
+                    active: false,
+                    alwaysOpen: false,
+                    fillspace: false,
+                    collapsible: true
+            	});
+			}
+		</script>
+	</head>
+	<body>
+		<div id="menu">
+			<ul>
+				<li><a href="#trafficmap">Traffic Counters</a></li>
+				<li><a id="importTab" href="">Import</a></li>
+				<li id="download"><a download="trafficcounter.json">Download</a></li>
+			</ul>
+		
+		<div id="mapframe" style="width: 50%; height: 100%; float:left;">
+			<div id="map"></div>
+		</div>
+		
+		<div id="inputform" style="width: 50%; height: 100%; float:right;">
+			<form id="form" padding: 25px;>
+				Lat/Lon:<br><input type="text" id="latlon" readonly="readonly"><br>
+				Name:<br> <input type="text" id="name"><br>
+				Number:<br> <input type="text" id="number"><br>
+				<div id="accordion">
+  					<h3>Direction 1</h3>
+  					<div>
+  						Direction 1:<br>
+  						Lon:<input size="10" type="text" id="lon1" readonly="readonly">Lat:<input size="10" type="text" id="lat1" readonly="readonly"><button id="add1" type="button">Add Direction</button><br>
+  						Year Traffic:<br>
+  						<input type="text" id="yt1"><br>
+  						Neighbour Direction 1:<br>
+  						<textarea id="nd1" cols="50" rows="5"></textarea><br>
+  						Average daily traffic:<br>
+  						<textarea id="dt1" cols="50" rows="5"></textarea><br>
+  						Average weekly traffic:<br>
+  						<textarea id="wt1" cols="50" rows="5"></textarea><br>
+  						Average monthly traffic:<br>
+  						<textarea id="mt1" cols="50" rows="5"></textarea>
+  					</div>
+  					<h3>Direction 2</h3>
+  					<div>
+  						Direction 2:<br>
+  						Lon:<input size="10" type="text" id="lon2" readonly="readonly">Lat:<input size="10" type="text" id="lat2" readonly="readonly"><button id="add2" type="button">Add Direction</button><br>
+  						Year Traffic:<br>
+  						<input type="text" id="yt2"><br>
+  						Neighbour Direction 2:<br>
+  						<textarea id="nd2" cols="50" rows="5"></textarea><br>
+  						Average daily traffic:<br>
+  						<textarea id="dt2" cols="50" rows="5"></textarea><br>
+  						Average weekly traffic:<br>
+  						<textarea id="wt2" cols="50" rows="5"></textarea><br>
+  						Average monthly traffic:<br>
+  						<textarea id="mt2" cols="50" rows="5"></textarea>
+  					</div>
+				</div>
+				<button onclick="deleteCounter()" type="button">Delete</button><button type="button" onclick="saveCounter()">Save</button>
+			</form>
+		</div>
+		</div>
+	</body>
+</html>
