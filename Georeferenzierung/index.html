@@ -64,6 +64,7 @@
                     for(var k=0;k<counterList[i].direction.length;k++){
                         var dir = counterList[i].direction[k];
                         var dirtmp = {};
+			dirtmp.Name = dir.name;
                         dirtmp.Predecessor = dir.predecessor;
                         dirtmp.Successor = dir.successor;
                         dirtmp.Hourly = dir.hourly.split(",").map(function(x){return parseInt(x)});
